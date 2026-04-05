@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🐴 小马找朋友 - 春节配对游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Microsoft YaHei', cursive, sans-serif;
+            background: linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .title {
+            font-size: clamp(32px, 8vw, 48px);
+            color: #E74C3C;
+            text-shadow: 3px 3px 0 #F1C40F;
+            margin-bottom: 30px;
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .score-board {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .score-board span {
+            font-size: clamp(18px, 4vw, 24px);
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        .target-area {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            padding: 40px;
+            margin: 20px auto;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .target-emoji {
+            font-size: clamp(80px, 20vw, 120px);
+            animation: float 3s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
+        }
+
+        .target-emoji:hover {
+            transform: scale(1.1);
+        }
+
+        .target-emoji:active {
+            transform: scale(1.3);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .target-name {
+            font-size: clamp(28px, 6vw, 36px);
+            color: #E74C3C;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .sound-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .sound-button:hover {
+            transform: scale(1.1);
+        }
+
+        .sound-button:active {
+            transform: scale(0.9);
+        }
+
+        .prompt-text {
+            font-size: clamp(20px, 5vw, 28px);
+            color: #2C3E50;
+            margin: 20px 0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .options-container {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .option-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            min-width: 140px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            border: 4px solid transparent;
+            position: relative;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .option-card:hover::before {
+            opacity: 1;
+        }
+
+        .option-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .option-card:active {
+            transform: scale(0.92);
+        }
+
+        .option-card.correct {
+            animation: correctPulse 0.6s ease;
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .option-card.wrong {
+            animation: wrongShake 0.5s ease;
+            border-color: #E74C3C;
+            background: linear-gradient(135deg, #FFEBEE 0%, #FADBD8 100%);
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-15px); }
+            40% { transform: translateX(15px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+
+        .option-emoji {
+            font-size: clamp(60px, 15vw, 90px);
+            transition: transform 0.3s ease;
+        }
+
+        .feedback-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .feedback-content {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90%;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feedback-emoji {
+            font-size: 100px;
+            margin-bottom: 20px;
+            display: block;
+            animation: bounce 0.6s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .feedback-text {
+            font-size: clamp(28px, 6vw, 40px);
+            color: #2C3E50;
+            margin-bottom: 20px;
+        }
+
+        .feedback-subtext {
+            font-size: clamp(18px, 4vw, 24px);
+            color: #7F8C8D;
+            margin-bottom: 30px;
+        }
+
+        .feedback-button {
+            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .feedback-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .star-burst {
+            position: fixed;
+            font-size: 40px;
+            animation: starBurst 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        @keyframes starBurst {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(2) rotate(180deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            top: -15px;
+            animation: confettiFall 3s linear forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes confettiFall {
+            0% { top: -15px; transform: translateX(0) rotate(0deg); }
+            100% { top: 110vh; transform: translateX(100px) rotate(720deg); }
+        }
+
+        .horse-mascot {
+            font-size: clamp(50px, 12vw, 80px);
+            margin: 20px 0;
+            animation: horseBounce 1.5s ease-in-out infinite;
+            display: inline-block;
+            filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes horseBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(-5deg); }
+            75% { transform: translateY(0) rotate(5deg); }
+        }
+
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .home-button:hover {
+            transform: scale(1.1) rotate(-10deg);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .home-button:active {
+            transform: scale(0.9);
+        }
+
+        .mode-select {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-button {
+            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 25px 40px;
+            font-size: clamp(18px, 4vw, 24px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .mode-button::before {
+            content: '⭐';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 16px;
+        }
+
+        .mode-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .mode-button:active {
+            background: linear-gradient(135deg, #27AE60 0%, #1E8449 100%);
+        }
+
+        .mode-label {
+            display: block;
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #E74C3C 0%, #FF6B9D 50%, #F1C40F 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3) 50%);
+            background-size: 200% 200%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-size: clamp(20px, 4vw, 28px);
+            color: #E74C3C;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .combo-display {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF6B9D 0%, #E74C3C 100%);
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: clamp(18px, 4vw, 24px);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .combo-display.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .achievement {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 30px;
+            padding: 30px 50px;
+            text-align: center;
+            z-index: 2000;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.5);
+        }
+
+        .achievement.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .achievement-emoji {
+            font-size: 80px;
+            margin-bottom: 15px;
+        }
+
+        .achievement-text {
+            font-size: 24px;
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        .memory-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 30px;
+            font-size: clamp(24px, 6vw, 36px);
+            z-index: 500;
+            animation: fadeInOut 4s ease forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        .settings-area {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-label {
+            font-size: 18px;
+            color: #7F8C8D;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .checkbox-label input {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .test-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #3498DB;
+            color: white;
+            border: none;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 15px;
+            }
+
+            .options-container {
+                gap: 15px;
+            }
+
+            .option-card {
+                padding: 20px;
+                min-width: 100px;
+                min-height: 100px;
+            }
+
+            .mode-select {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mode-button {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .settings-area {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="home-button" onclick="goToMainMenu()" title="返回主页">🏠</button>
+
+    <div class="timer" id="timerDisplay" style="display: none;">⏱ 0</div>
+    <div class="combo-display" id="comboDisplay">🔥 x0</div>
+
+    <div id="mainMenu" class="game-container">
+        <div class="horse-mascot">🐴</div>
+        <h1 class="title">小马找朋友</h1>
+        <p style="font-size: 20px; color: #7F8C8D; margin-bottom: 30px;">选择游戏模式！</p>
+
+        <div class="mode-select">
+            <button class="mode-button" onclick="startGame('classic')">
+                🎯 配对
+                <span class="mode-label">找出相同的物品</span>
+            </button>
+            <button class="mode-button" onclick="startGame('speed')">
+                ⚡ 速战
+                <span class="mode-label">30秒限时挑战</span>
+            </button>
+            <button class="mode-button" onclick="startGame('memory')">
+                🧠 记忆
+                <span class="mode-label">记住后找出</span>
+            </button>
+            <button class="mode-button" onclick="startGame('sequence')">
+                🔢 顺序
+                <span class="mode-label">按顺序点击</span>
+            </button>
+        </div>
+
+        <div class="settings-area">
+            <div class="settings-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="autoSpeakToggle" checked onchange="toggleAutoSpeak()">
+                    🔊 自动朗读物品名称
+                </label>
+            </div>
+            <div class="settings-row">
+                <button class="test-button" onclick="testSpeech()">
+                    🗣️ 测试语音
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-display" style="margin-top: 30px; font-size: 18px; color: #7F8C8D;">
+            ⭐ 总星星: <span id="totalStars">0</span> |
+            🏆 最高分: <span id="highScore">0</span> |
+            🎯 已完成: <span id="completedCount">0</span> 局
+        </div>
+
+        <div style="margin-top: 20px; font-size: 16px; color: #999;">
+            <p>💡 提示：点击"配对"模式可以解锁更多模式哦！</p>
+        </div>
+
+    </div>
+
+    <div id="gameArea" class="game-container" style="display: none;">
+        <div class="score-board">
+            <span>⭐ <span id="score">0</span> / <span id="target">10</span></span>
+            <span style="margin-left: 15px;">🎯 关卡 <span id="levelNum">1</span></span>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="target-area">
+            <div class="target-emoji" id="targetEmoji">🧧</div>
+            <div class="target-name" id="targetName">红包</div>
+            <button class="sound-button" id="soundButton" onclick="speakTarget()" title="听发音">🔊</button>
+        </div>
+
+        <div class="prompt-text" id="promptText">找出和上面一样的！</div>
+
+        <div class="options-container" id="optionsContainer">
+        </div>
+
+        <div class="horse-mascot" id="horseMascot">🐴</div>
+    </div>
+
+    <div class="feedback-overlay" id="feedbackOverlay">
+        <div class="feedback-content">
+            <div class="feedback-emoji" id="feedbackEmoji">🎉</div>
+            <div class="feedback-text" id="feedbackText">太棒了！</div>
+            <div class="feedback-subtext" id="feedbackSubtext">答对了！</div>
+            <div id="bonusStars" style="display: none; margin: 20px 0;">
+                <span style="font-size: 30px;">⭐⭐⭐</span>
+            </div>
+            <button class="feedback-button" id="continueButton">继续</button>
+        </div>
+    </div>
+
+    <div class="achievement" id="achievementPopup">
+        <div class="achievement-emoji">🏆</div>
+        <div class="achievement-text" id="achievementText">首次通关！</div>
+    </div>
+
+    <script>
+        const ITEMS = [
+            // 春节传统物品
+            { id: 1, emoji: '🧧', name: '红包', color: '#E74C3C' },
+            { id: 2, emoji: '🏮', name: '红灯笼', color: '#E74C3C' },
+            { id: 3, emoji: '🧨', name: '鞭炮', color: '#E74C3C' },
+            { id: 4, emoji: '📜', name: '卷轴', color: '#F1C40F' },
+            { id: 5, emoji: '🎋', name: '竹子', color: '#27AE60' },
+            { id: 6, emoji: '✂️', name: '剪刀', color: '#E74C3C' },
+            { id: 7, emoji: '💰', name: '钱袋', color: '#F1C40F' },
+            { id: 8, emoji: '🥟', name: '饺子', color: '#FFFFFF' },
+            { id: 9, emoji: '🎎', name: '玩偶', color: '#E74C3C' },
+            { id: 10, emoji: '🍬', name: '糖果', color: '#FF69B4' },
+
+            // 12生肖
+            { id: 11, emoji: '🐭', name: '老鼠', color: '#7F8C8D' },
+            { id: 12, emoji: '🐮', name: '牛', color: '#E67E22' },
+            { id: 13, emoji: '🐯', name: '老虎', color: '#C0392B' },
+            { id: 14, emoji: '🐰', name: '兔子', color: '#E91E63' },
+            { id: 15, emoji: '🐉', name: '龙', color: '#E74C3C' },
+            { id: 16, emoji: '🐍', name: '蛇', color: '#27AE60' },
+            { id: 17, emoji: '🐴', name: '小马', color: '#8B4513' },
+            { id: 18, emoji: '🐑', name: '羊', color: '#F39C12' },
+            { id: 19, emoji: '🐵', name: '猴子', color: '#E67E22' },
+            { id: 20, emoji: '🐔', name: '鸡', color: '#D35400' },
+            { id: 21, emoji: '🐶', name: '狗', color: '#7F8C8D' },
+            { id: 22, emoji: '🐷', name: '猪', color: '#E91E63' },
+
+            // 装饰物品
+            { id: 23, emoji: '🎊', name: '彩球', color: '#E74C3C' },
+            { id: 24, emoji: '🎈', name: '气球', color: '#3498DB' },
+            { id: 25, emoji: '🎀', name: '蝴蝶结', color: '#9B59B6' },
+            { id: 26, emoji: '🎐', name: '风铃', color: '#3498DB' },
+            { id: 27, emoji: '🎏', name: '彩旗', color: '#E74C3C' },
+            { id: 28, emoji: '🏆', name: '奖杯', color: '#F1C40F' },
+            { id: 29, emoji: '🎸', name: '乐器', color: '#E67E22' },
+            { id: 30, emoji: '🎹', name: '钢琴', color: '#2C3E50' },
+
+            // 食物
+            { id: 31, emoji: '🍜', name: '面条', color: '#F5CBA7' },
+            { id: 32, emoji: '🍚', name: '米饭', color: '#F5CBA7' },
+            { id: 33, emoji: '🍠', name: '红薯', color: '#E67E22' },
+            { id: 34, emoji: '🍘', name: '仙贝', color: '#F1C40F' },
+            { id: 35, emoji: '🥮', name: '月饼', color: '#E67E22' },
+            { id: 36, emoji: '🥡', name: '外卖盒', color: '#F5CBA7' },
+            { id: 37, emoji: '🍱', name: '便当', color: '#E74C3C' },
+            { id: 38, emoji: '🥙', name: '肉夹馍', color: '#F5CBA7' },
+            { id: 39, emoji: '🍢', name: '串烧', color: '#E74C3C' },
+            { id: 40, emoji: '🍲', name: '火锅', color: '#E74C3C' },
+            { id: 41, emoji: '🥠', name: '幸运饼干', color: '#F1C40F' },
+            { id: 42, emoji: '🍩', name: '甜甜圈', color: '#F1C40F' },
+            { id: 43, emoji: '🍪', name: '饼干', color: '#F5CBA7' },
+            { id: 44, emoji: '🎂', name: '蛋糕', color: '#F39C12' },
+            { id: 45, emoji: '🍦', name: '冰淇淋', color: '#3498DB' },
+            { id: 46, emoji: '🧁', name: '松饼', color: '#F39C12' },
+            { id: 47, emoji: '🍫', name: '巧克力', color: '#7F8C8D' },
+            { id: 48, emoji: '🍿', name: '爆米花', color: '#F5CBA7' },
+            { id: 49, emoji: '🥜', name: '花生', color: '#E67E22' },
+            { id: 50, emoji: '🌰', name: '栗子', color: '#8B4513' }
+        ];
+
+        const ACHIEVEMENTS = {
+            firstComplete: { id: 'firstComplete', name: '首次通关', emoji: '🎉', condition: function() { return stats.completed >= 1; } },
+            speedMaster: { id: 'speedMaster', name: '速战大师', emoji: '⚡', condition: function() { return stats.speedBestTime > 0; } },
+            perfectScore: { id: 'perfectScore', name: '满分达人', emoji: '⭐', condition: function() { return stats.perfectScores >= 1; } },
+            comboKing: { id: 'comboKing', name: '连击之王', emoji: '🔥', condition: function() { return stats.maxCombo >= 5; } },
+            collector100: { id: 'collector100', name: '百星收集', emoji: '💫', condition: function() { return totalStars >= 100; } },
+            allModes: { id: 'allModes', name: '全能玩家', emoji: '🏆', condition: function() { return Object.keys(stats.modeCompleted).length >= 4; } }
+        };
+
+        let currentMode = 'classic';
+        let currentLevel = 1;
+        let score = 0;
+        let targetScore = 10;
+        let currentTarget = null;
+        let canClick = true;
+        let combo = 0;
+        let timerInterval = null;
+        let timeLeft = 0;
+        let sequenceIndex = 0;
+        let sequenceItems = [];
+        let shouldSpeakTarget = true;
+
+        let stats = {
+            totalPlayed: 0,
+            completed: 0,
+            perfectScores: 0,
+            maxCombo: 0,
+            speedBestTime: 0,
+            modeCompleted: {},
+            lastPlayDate: null
+        };
+
+        let totalStars = parseInt(localStorage.getItem('horseGameStars') || 0);
+        let highScore = parseInt(localStorage.getItem('horseGameHighScore') || 0);
+        let completedCount = parseInt(localStorage.getItem('horseGameCompleted') || 0);
+        let achievements = JSON.parse(localStorage.getItem('horseGameAchievements') || '{}');
+        let autoSpeakEnabled = false;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTone(freq, duration, type) {
+            type = type || 'sine';
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.frequency.value = freq;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrect() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(523, 0.15);
+            setTimeout(function() { playTone(659, 0.15); }, 150);
+            setTimeout(function() { playTone(784, 0.2); }, 300);
+        }
+
+        function playWrong() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(300, 0.2);
+        }
+
+        function playClick() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(800, 0.05);
+        }
+
+        function playCombo(level) {
+            const baseFreq = 400;
+            for (let i = 0; i < level; i++) {
+                setTimeout(function() { playTone(baseFreq + i * 100, 0.1); }, i * 80);
+            }
+        }
+
+        function playAchievement() {
+            const notes = [523, 659, 784, 1047];
+            notes.forEach(function(freq, i) {
+                setTimeout(function() { playTone(freq, 0.3); }, i * 150);
+            });
+        }
+
+        function playLevelComplete() {
+            const melody = [
+                { freq: 523, duration: 0.15 },
+                { freq: 659, duration: 0.15 },
+                { freq: 784, duration: 0.15 },
+                { freq: 1047, duration: 0.2 },
+                { freq: 784, duration: 0.15 },
+                { freq: 1047, duration: 0.3 }
+            ];
+            let totalDelay = 0;
+            melody.forEach(function(note, i) {
+                totalDelay += note.duration * 1000;
+                setTimeout(function() {
+                    playTone(note.freq, note.duration);
+                }, i * 150);
+            });
+            setTimeout(function() {
+                createConfettiSound();
+            }, 600);
+        }
+
+        function createConfettiSound() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(function() {
+                    playTone(800 + Math.random() * 400, 0.05);
+                }, i * 50);
+            }
+        }
+
+        let speechSynth = window.speechSynthesis;
+        let voices = [];
+
+        function speak(text) {
+            if (!speechSynth) {
+                console.error('语音合成API不支持');
+                return;
+            }
+            speechSynth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.8;
+            utterance.pitch = 1.1;
+            utterance.volume = 1.0;
+
+            utterance.onstart = function() { console.log('开始朗读:', text); };
+            utterance.onend = function() { console.log('朗读完成:', text); };
+            utterance.onerror = function(e) {
+                console.error('朗读错误:', e);
+                console.error('错误详情:', e.error);
+            };
+
+            speechSynth.speak(utterance);
+            console.log('speak()已调用');
+        }
+
+        function speakTarget() {
+            if (currentTarget) {
+                speak(currentTarget.name);
+                playClick();
+            }
+        }
+
+        function testSpeech() {
+            playClick();
+            speak('小马找朋友游戏');
+        }
+
+        function toggleAutoSpeak() {
+            const toggle = document.getElementById('autoSpeakToggle');
+            autoSpeakEnabled = toggle.checked;
+            localStorage.setItem('autoSpeak', autoSpeakEnabled ? 'true' : 'false');
+            playClick();
+        }
+
+        function saveStats() {
+            localStorage.setItem('horseGameStats', JSON.stringify(stats));
+            localStorage.setItem('horseGameStars', totalStars);
+            localStorage.setItem('horseGameHighScore', highScore);
+            localStorage.setItem('horseGameCompleted', completedCount);
+            localStorage.setItem('horseGameAchievements', JSON.stringify(achievements));
+        }
+
+        function loadStats() {
+            const savedStats = localStorage.getItem('horseGameStats');
+            if (savedStats) {
+                const parsed = JSON.parse(savedStats);
+                stats.totalPlayed = (parsed.totalPlayed || 0);
+                stats.completed = (parsed.completed || 0);
+                stats.perfectScores = (parsed.perfectScores || 0);
+                stats.maxCombo = (parsed.maxCombo || 0);
+                stats.speedBestTime = (parsed.speedBestTime || 0);
+                stats.modeCompleted = (parsed.modeCompleted || {});
+                stats.lastPlayDate = parsed.lastPlayDate;
+            }
+        }
+
+        function init() {
+            document.getElementById('totalStars').textContent = totalStars;
+            document.getElementById('highScore').textContent = highScore;
+            document.getElementById('completedCount').textContent = completedCount;
+
+            const toggle = document.getElementById('autoSpeakToggle');
+            const savedAutoSpeak = localStorage.getItem('autoSpeak');
+            autoSpeakEnabled = (savedAutoSpeak === 'true');
+            if (toggle) {
+                toggle.checked = autoSpeakEnabled;
+            }
+
+            document.addEventListener('touchstart', function() {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }, { once: true });
+
+            loadStats();
+        }
+
+        function startGame(mode) {
+            playClick();
+            currentMode = mode;
+            currentLevel = 1;
+            score = 0;
+            combo = 0;
+
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+
+            updateScore();
+            startLevel();
+        }
+
+        function startLevel() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            switch(currentMode) {
+                case 'classic':
+                    targetScore = 10;
+                    break;
+                case 'speed':
+                    targetScore = 15;
+                    startTimer(30);
+                    break;
+                case 'memory':
+                    targetScore = 8;
+                    break;
+                case 'sequence':
+                    targetScore = 12;
+                    const shuffled = [...ITEMS].sort(function() { return Math.random() - 0.5; });
+                    sequenceItems = shuffled.slice(0, 10);
+                    sequenceIndex = 0;
+                    break;
+            }
+
+            document.getElementById('target').textContent = targetScore;
+            document.getElementById('levelNum').textContent = currentLevel;
+
+            shouldSpeakTarget = true;
+            nextQuestion();
+        }
+
+        function startTimer(seconds) {
+            timeLeft = seconds;
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.style.display = 'block';
+            timerDisplay.style.color = '#27AE60';
+            timerDisplay.textContent = '⏱ ' + timeLeft;
+
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                timerDisplay.textContent = '⏱ ' + timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.style.color = '#E74C3C';
+                } else {
+                    timerDisplay.style.color = '#27AE60';
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            if (score >= targetScore) {
+                levelComplete();
+                return;
+            }
+
+            let availableItems = [...ITEMS];
+
+            if (currentMode === 'sequence') {
+                if (sequenceIndex >= sequenceItems.length) {
+                    sequenceIndex = 0;
+                }
+                currentTarget = sequenceItems[sequenceIndex];
+                sequenceIndex++;
+            } else {
+                const targetIndex = Math.floor(Math.random() * availableItems.length);
+                currentTarget = availableItems[targetIndex];
+            }
+
+            let options = [currentTarget];
+            const otherItems = availableItems.filter(function(item) { return item.id !== currentTarget.id; });
+
+            for (let i = 0; i < 3; i++) {
+                const randomIndex = Math.floor(Math.random() * otherItems.length);
+                options.push(otherItems[randomIndex]);
+                otherItems.splice(randomIndex, 1);
+            }
+
+            options.sort(function() { return Math.random() - 0.5; });
+
+            document.getElementById('targetEmoji').textContent = currentTarget.emoji;
+            document.getElementById('targetName').textContent = currentTarget.name;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            options.forEach(function(item) {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.innerHTML = '<div class="option-emoji">' + item.emoji + '</div>';
+                card.onclick = function() { checkAnswer(item.id); };
+                container.appendChild(card);
+            });
+
+            const progress = (score / targetScore) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            canClick = true;
+
+            // 物品显示时立即朗读物品名称（所有模式都朗读）
+            if (autoSpeakEnabled) {
+                console.log('准备朗读:', currentTarget.name);
+                speak(currentTarget.name);
+            }
+        }
+
+        function showMemoryHint() {
+            const hint = document.createElement('div');
+            hint.className = 'memory-hint';
+            hint.textContent = '记住它！';
+            document.body.appendChild(hint);
+
+            setTimeout(function() {
+                document.getElementById('targetEmoji').style.opacity = '0.3';
+                document.getElementById('targetName').style.opacity = '0.3';
+            }, 2000);
+
+            setTimeout(function() {
+                hint.remove();
+                document.getElementById('targetEmoji').style.opacity = '1';
+                document.getElementById('targetName').style.opacity = '1';
+            }, 4000);
+        }
+
+        function checkAnswer(selectedId) {
+            if (!canClick) return;
+            canClick = false;
+
+            const cards = document.querySelectorAll('.option-card');
+
+            if (selectedId === currentTarget.id) {
+                combo++;
+                if (combo > stats.maxCombo) {
+                    stats.maxCombo = combo;
+                }
+                updateCombo();
+                playCorrect();
+
+                cards.forEach(function(card) {
+                    if (card.querySelector('.option-emoji').textContent === currentTarget.emoji) {
+                        card.classList.add('correct');
+                    }
+                });
+
+                score++;
+                updateScore();
+
+                if (combo >= 3) {
+                    showComboBonus();
+                }
+
+                setTimeout(function() {
+                    hideFeedback();
+                    nextQuestion();
+                }, combo >= 3 ? 1000 : 1500);
+            } else {
+                combo = 0;
+                updateCombo();
+                playWrong();
+
+                cards.forEach(function(card) {
+                    if (card.querySelector('.option-emoji').textContent === ITEMS.find(function(i) { return i.id === selectedId; }).emoji) {
+                        card.classList.add('wrong');
+                    }
+                });
+
+                showFeedback(false);
+
+                setTimeout(function() {
+                    hideFeedback();
+                    cards.forEach(function(card) { card.classList.remove('wrong'); });
+                    canClick = true;
+                }, 1000);
+            }
+        }
+
+        function updateCombo() {
+            const comboDisplay = document.getElementById('comboDisplay');
+            if (combo >= 2) {
+                comboDisplay.textContent = '🔥 x' + combo;
+                comboDisplay.classList.add('show');
+                playCombo(Math.min(combo, 5));
+            } else {
+                comboDisplay.classList.remove('show');
+            }
+        }
+
+        function showComboBonus() {
+            const bonus = document.createElement('div');
+            bonus.className = 'combo-display show';
+            bonus.style.cssText = 'top: 130px;';
+            bonus.textContent = '🔥 连击x' + combo + '！';
+            document.body.appendChild(bonus);
+
+            setTimeout(function() { bonus.remove(); }, 2000);
+        }
+
+        function showFeedback(isComplete) {
+            const overlay = document.getElementById('feedbackOverlay');
+            const emoji = document.getElementById('feedbackEmoji');
+            const text = document.getElementById('feedbackText');
+            const subtext = document.getElementById('feedbackSubtext');
+            const bonusDiv = document.getElementById('bonusStars');
+
+            if (isComplete) {
+                emoji.textContent = '🎊';
+                text.textContent = '关卡完成！';
+                subtext.textContent = '获得 ' + calculateStars() + ' 颗星星！';
+                bonusDiv.style.display = 'block';
+                createConfetti();
+            } else if (document.querySelector('.option-card.correct')) {
+                emoji.textContent = '⭐';
+                text.textContent = '太棒了！';
+                subtext.textContent = '答对了！';
+                bonusDiv.style.display = 'none';
+                createStarBurst();
+            } else {
+                emoji.textContent = '💪';
+                text.textContent = '再试试';
+                subtext.textContent = '别灰心，继续加油！';
+                bonusDiv.style.display = 'none';
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        function hideFeedback() {
+            document.getElementById('feedbackOverlay').style.display = 'none';
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('target').textContent = targetScore;
+        }
+
+        function calculateStars() {
+            const ratio = score / targetScore;
+            if (ratio >= 1) return 3;
+            if (ratio >= 0.7) return 2;
+            return 1;
+        }
+
+        function levelComplete() {
+            clearInterval(timerInterval);
+
+            const stars = calculateStars();
+            totalStars += stars;
+
+            if (stars === 3) {
+                stats.perfectScores++;
+            }
+
+            if (!stats.modeCompleted[currentMode]) {
+                stats.modeCompleted[currentMode] = true;
+            }
+
+            stats.completed++;
+            completedCount = stats.completed;
+
+            if (totalStars > highScore) {
+                highScore = totalStars;
+            }
+
+            saveStats();
+            checkAchievements();
+            playLevelComplete();
+            showFeedback(true);
+
+            document.getElementById('totalStars').textContent = totalStars;
+            document.getElementById('highScore').textContent = highScore;
+            document.getElementById('completedCount').textContent = completedCount;
+
+            document.getElementById('continueButton').onclick = function() {
+                hideFeedback();
+                currentLevel++;
+                score = 0;
+                combo = 0;
+
+                const nextLevelText = '第' + currentLevel + '关';
+                setTimeout(function() { speak(nextLevelText); }, 300);
+                startLevel();
+            };
+        }
+
+        function timeUp() {
+            showFeedback(true);
+            document.getElementById('feedbackText').textContent = '时间到！';
+            document.getElementById('feedbackSubtext').textContent = '获得 ' + calculateStars() + ' 颗星星';
+
+            if (score > stats.speedBestTime) {
+                stats.speedBestTime = score;
+            }
+
+            document.getElementById('continueButton').onclick = function() {
+                hideFeedback();
+                goToMainMenu();
+            };
+        }
+
+        function goToMainMenu() {
+            playClick();
+            clearInterval(timerInterval);
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('timerDisplay').style.display = 'none';
+        }
+
+        function checkAchievements() {
+            for (const key in ACHIEVEMENTS) {
+                const achievement = ACHIEVEMENTS[key];
+                if (!achievements[achievement.id] && achievement.condition()) {
+                    unlockAchievement(achievement);
+                }
+            }
+        }
+
+        function unlockAchievement(achievement) {
+            achievements[achievement.id] = true;
+            localStorage.setItem('horseGameAchievements', JSON.stringify(achievements));
+
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('achievementEmoji').textContent = achievement.emoji;
+            document.getElementById('achievementText').textContent = achievement.name;
+            popup.classList.add('show');
+
+            playAchievement();
+
+            setTimeout(function() {
+                popup.classList.remove('show');
+            }, 3000);
+        }
+
+        function createStarBurst() {
+            const colors = ['#FFD700', '#FFA500', '#FF6347', '#4CAF50'];
+            for (let i = 0; i < 8; i++) {
+                setTimeout(function() {
+                    const star = document.createElement('div');
+                    star.className = 'star-burst';
+                    star.textContent = '⭐';
+                    star.style.left = '50%';
+                    star.style.top = '50%';
+                    star.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(star);
+
+                    setTimeout(function() { star.remove(); }, 1000);
+                }, i * 50);
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#E74C3C', '#F1C40F', '#4CAF50', '#3498DB', '#FF6B9D'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(function() {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(function() { confetti.remove(); }, 5000);
+                }, i * 30);
+            }
+        }
+
+        setInterval(function() {
+            const mascot = document.getElementById('horseMascot');
+            if (mascot) {
+                const emojis = ['🐴', '🎉', '⭐', '🧧'];
+                mascot.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            }
+        }, 3000);
+
+        init();
+    </script>
+</body>
+</html>
